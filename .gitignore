@@ -1,0 +1,6 @@
+.recommenders/
+pentaho-report-generator/.project
+pentaho-report-generator/.classpath
+core/
+pentaho-report-generator/target/
+RemoteSystemsTempFiles/

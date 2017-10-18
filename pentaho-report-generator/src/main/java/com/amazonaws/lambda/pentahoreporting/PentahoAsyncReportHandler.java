@@ -1,0 +1,126 @@
+/**
+ * 
+ */
+package com.amazonaws.lambda.pentahoreporting;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.PrintStream;
+import java.net.URL;
+import java.util.Map;
+import java.util.Properties;
+
+import org.apache.commons.io.IOUtils;
+import org.json.simple.parser.ParseException;
+import org.pentaho.reporting.engine.classic.core.ClassicEngineBoot;
+import org.pentaho.reporting.engine.classic.core.ReportProcessingException;
+import org.pentaho.reporting.libraries.resourceloader.ResourceException;
+
+import com.amazonaws.AmazonClientException;
+import com.amazonaws.AmazonServiceException;
+import com.amazonaws.lambda.pentahoreporting.AbstractReportGenerator.OutputType;
+import com.amazonaws.lambda.s3url.S3URLStreamHandlerFactory;
+import com.amazonaws.services.lambda.runtime.Context;
+import com.amazonaws.services.lambda.runtime.RequestStreamHandler;
+
+/**
+ * @author Jaret
+ *
+ */
+public class PentahoAsyncReportHandler extends PentahoReportHandlerBase implements RequestStreamHandler {
+
+	public PentahoAsyncReportHandler() {
+	    ClassicEngineBoot.getInstance().start();
+	    URL.setURLStreamHandlerFactory(new S3URLStreamHandlerFactory());
+	}
+
+	/* (non-Javadoc)
+	 * @see com.amazonaws.services.lambda.runtime.RequestStreamHandler#handleRequest(java.io.InputStream, java.io.OutputStream, com.amazonaws.services.lambda.runtime.Context)
+	 */
+	@Override
+	public void handleRequest(InputStream input, OutputStream output, Context context) throws IOException {
+    	System.out.println("Generating report.");
+    	try {
+    		String inputString = IOUtils.toString(input, "UTF-8");
+    		Map<String, Object> parms = parseParameters(inputString);
+    		if (parms.containsKey(PARM_REPORT)) {
+    			Properties props = new Properties();
+    			URL s3PropsUrl = new URL("s3:" + System.getenv(ENV_S3_BUCKET) + "/" + parms.get(PARM_REPORT) + ".properties");
+    			try {
+	    			InputStream propStream = s3PropsUrl.openStream();
+	    			props.load(propStream);
+	    			propStream.close();
+    			} catch(AmazonClientException e) {
+    				System.out.println("No properties file found for " + parms.get(PARM_REPORT) + ". Report's default data settings will be used.");
+    			}
+    			
+    			OutputType outputType = OutputType.PDF;
+    			if (parms.containsKey(PARM_OUTPUT_TYPE)) {
+    				if (((String)parms.get(PARM_OUTPUT_TYPE)).toLowerCase().equals(PARM_OUTPUT_TYPE_PDF)) {
+    					outputType = OutputType.PDF;
+    				} else if (((String)parms.get(PARM_OUTPUT_TYPE)).toLowerCase().equals(PARM_OUTPUT_TYPE_EXCEL)) {
+    					outputType = OutputType.EXCEL;
+    				} else if (((String)parms.get(PARM_OUTPUT_TYPE)).toLowerCase().equals(PARM_OUTPUT_TYPE_HTML)) {
+    					outputType = OutputType.HTML;
+    				}
+    			}
+    			
+    			ReportGenerator reportGenerator = new ReportGenerator(new URL("s3:" + System.getenv(ENV_S3_BUCKET) + "/" + parms.get(PARM_REPORT) + ".prpt"),
+//    			ReportGenerator reportGenerator = new ReportGenerator(getClass().getClassLoader().getResource("customers.prpt"),
+    					parms,
+    					props.getProperty(PROP_DATA_DRIVER),
+    					props.getProperty(PROP_DATA_URL),
+    					props.getProperty(PROP_DATA_USER),
+    					props.getProperty(PROP_DATA_PASSWORD),
+    					props.getProperty(PROP_DATA_QUERY));
+    			ByteArrayOutputStream reportByteStream = new ByteArrayOutputStream();
+    			try {
+    				reportGenerator.generateReport(outputType, reportByteStream);
+    			} catch(ResourceException e) {
+    				ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    				PrintStream ps = new PrintStream(baos, true, "utf-8");
+    				
+    				Throwable cause = e;
+    				while (cause.getCause() != null) {
+    					cause = cause.getCause();
+    				}
+    				cause.printStackTrace(ps);
+    				output.write(("{ errorMessage: '" + e.getMessage() + "',"
+    						+ "  causeMessage: '" + cause.getMessage() + "',"
+    						+ "  causeStackTrace: '" + new String(baos.toByteArray(), "utf-8") + "' }").getBytes());
+    				return;
+    			}
+    			byte[] reportBytes = reportByteStream.toByteArray();
+    			if (!parms.containsKey(PARM_OUTPUT_BUCKET)) {
+    				output.write("{ error: 'You must provide a folder parameter' }".getBytes());
+    			} else if (!parms.containsKey(PARM_OUTPUT_KEY)) {
+    				output.write("{ error: 'You must provide a file parameter' }".getBytes());
+    			} else {
+    				putS3Object((String)parms.get(PARM_OUTPUT_BUCKET), (String)parms.get(PARM_OUTPUT_KEY), new ByteArrayInputStream(reportBytes), reportBytes.length);
+    				output.write(("{ message: 'Report generated',"
+    						+ "type: '" + parms.get(PARM_OUTPUT_TYPE) + "',"
+    						+ "folder: '" + parms.get(PARM_OUTPUT_BUCKET) + "',"
+    						+ "file: '" + parms.get(PARM_OUTPUT_KEY) + "'").getBytes());
+    			}
+    		} else {
+    			StringBuffer out = new StringBuffer();
+    			out.append("{ error: 'You must provide a report parameter',\n");
+    			out.append("  inputString: '" + inputString + "',\n");
+    			out.append("  parameters: { \n");
+    			for (String parm : parms.keySet()) {
+    				out.append("    \"" + parm + "\": '" + parms.get(parm) + "',\n");
+    			}
+    			out.append(" } }");
+    			output.write(out.toString().getBytes());
+    		}
+        } catch(ParseException | IllegalArgumentException | ReportProcessingException e) {
+        	context.getLogger().log(e.getMessage());
+			e.printStackTrace();
+			output.write(("{ errorMessage: '" + e.getMessage() + "' }").getBytes());
+		}
+	}
+
+}
