@@ -51,8 +51,12 @@ public class PentahoAsyncReportHandler extends PentahoReportHandlerBase implemen
     			URL s3PropsUrl = new URL("s3:" + System.getenv(ENV_S3_BUCKET) + "/" + parms.get(PARM_REPORT) + ".properties");
     			try {
 	    			InputStream propStream = s3PropsUrl.openStream();
-	    			props.load(propStream);
-	    			propStream.close();
+	    			if (propStream != null) {
+		    			props.load(propStream);
+		    			propStream.close();
+	    			} else {
+	    				System.out.println("No properties file found for " + parms.get(PARM_REPORT) + ". Report's default data settings will be used.");
+	    			}
     			} catch(AmazonClientException e) {
     				System.out.println("No properties file found for " + parms.get(PARM_REPORT) + ". Report's default data settings will be used.");
     			}
