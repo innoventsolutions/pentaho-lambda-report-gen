@@ -2,3 +2,4 @@
 core/
 pentaho-report-generator/target/
 RemoteSystemsTempFiles/
+xml-parse-test/

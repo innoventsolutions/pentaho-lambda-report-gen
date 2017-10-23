@@ -72,8 +72,8 @@ public class PentahoAsyncReportHandler extends PentahoReportHandlerBase implemen
     				}
     			}
     			
-    			ReportGenerator reportGenerator = new ReportGenerator(new URL("s3:" + System.getenv(ENV_S3_BUCKET) + "/" + parms.get(PARM_REPORT) + ".prpt"),
-//    			ReportGenerator reportGenerator = new ReportGenerator(getClass().getClassLoader().getResource("customers.prpt"),
+//    			ReportGenerator reportGenerator = new ReportGenerator(new URL("s3:" + System.getenv(ENV_S3_BUCKET) + "/" + parms.get(PARM_REPORT) + ".prpt"),
+    			ReportGenerator reportGenerator = new ReportGenerator(getClass().getClassLoader().getResource("customers.prpt"),
     					parms,
     					props.getProperty(PROP_DATA_DRIVER),
     					props.getProperty(PROP_DATA_URL),

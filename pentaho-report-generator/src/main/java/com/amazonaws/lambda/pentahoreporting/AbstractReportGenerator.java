@@ -195,6 +195,7 @@ public abstract class AbstractReportGenerator
       {
         case PDF:
         {
+          System.out.println("Creating PDF Report.");
           final PdfOutputProcessor outputProcessor =
               new PdfOutputProcessor(report.getConfiguration(), outputStream, report.getResourceManager());
           reportProcessor = new PageableReportProcessor(report, outputProcessor);

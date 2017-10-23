@@ -44,10 +44,12 @@ public class ReportGenerator extends AbstractReportGenerator {
 	 */
 	@Override
 	public MasterReport getReportDefinition() throws ResourceException {
+		System.out.println("Entering getReportDefinition.");
 	    // Parse the report file
 	    final ResourceManager resourceManager = new ResourceManager();
 	    Resource directly;
 //		try {
+		System.out.println("Calling createDirectly with " + mReport + ".");
 			directly = resourceManager.createDirectly(mReport, MasterReport.class);
 		    return (MasterReport) directly.getResource();
 //		} catch (ResourceException e) {

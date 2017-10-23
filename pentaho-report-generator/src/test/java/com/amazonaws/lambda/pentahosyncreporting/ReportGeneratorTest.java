@@ -24,8 +24,8 @@ public class ReportGeneratorTest {
 	    ClassicEngineBoot.getInstance().start();
 	    URL.setURLStreamHandlerFactory(new S3URLStreamHandlerFactory());
 
-//		ReportGenerator reportGenerator = new ReportGenerator(getClass().getClassLoader().getResource("customers.prpt"),
-		ReportGenerator reportGenerator = new ReportGenerator(new URL("s3:foundationforblindchildrentest/customers.prpt"),
+		ReportGenerator reportGenerator = new ReportGenerator(getClass().getClassLoader().getResource("customers.prpt"),
+//		ReportGenerator reportGenerator = new ReportGenerator(new URL("s3:foundationforblindchildrentest/customers.prpt"),
 				new HashMap<String, Object>(),
 				null,
 				null,

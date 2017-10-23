@@ -60,7 +60,7 @@ public class S3URLConnection extends URLConnection {
 				nextByte = is.read();
 			}
 			is.close();
-			System.out.println("Read " + readCount + " bytes.");
+			System.out.println("Read " + readCount + " bytes");
 			return new ByteArrayInputStream(file);
 
 		} catch (AmazonServiceException ase) {
