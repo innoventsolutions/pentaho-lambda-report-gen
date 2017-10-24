@@ -45,6 +45,17 @@
               <goal>shade</goal>
             </goals>
             <configuration>
+              <transformers>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+                  <resource>loader.properties</resource>
+                </transformer>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+                  <resource>libdocbundle.properties</resource>
+                </transformer>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+                  <resource>libformula.properties</resource>
+                </transformer>
+              </transformers>
               <artifactSet>
                 <excludes>
                   <exclude>com.amazonaws:aws-lambda-java-events</exclude>

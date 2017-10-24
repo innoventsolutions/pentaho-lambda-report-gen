@@ -40,6 +40,12 @@ public class PentahoReportHandlerBase {
 	protected static final String PARM_OUTPUT_TYPE_PDF = "pdf";
 	protected static final String PARM_OUTPUT_TYPE_EXCEL = "excel";
 	protected static final String PARM_OUTPUT_TYPE_HTML = "html";
+	protected static final String RESPONSE_TEMPLATE = "{\n"
+		    + "    \"isBase64Encoded\": false,\n"
+		    + "    \"statusCode\": %d,\n"
+		    + "    \"headers\": { \"Content-Type\": \"application/json\" },\n"
+		    + "    \"body\": \"%s\"\n"
+		    + "}";
 	
 	protected PutObjectResult putS3Object(String bucketName, String key, InputStream inputStream) {
 		// Read out the stream to get the content length which is required by S3

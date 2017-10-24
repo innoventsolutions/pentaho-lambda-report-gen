@@ -20,7 +20,6 @@ import org.pentaho.reporting.engine.classic.core.ReportProcessingException;
 import org.pentaho.reporting.libraries.resourceloader.ResourceException;
 
 import com.amazonaws.AmazonClientException;
-import com.amazonaws.AmazonServiceException;
 import com.amazonaws.lambda.pentahoreporting.AbstractReportGenerator.OutputType;
 import com.amazonaws.lambda.s3url.S3URLStreamHandlerFactory;
 import com.amazonaws.services.lambda.runtime.Context;
@@ -72,14 +71,17 @@ public class PentahoAsyncReportHandler extends PentahoReportHandlerBase implemen
     				}
     			}
     			
-//    			ReportGenerator reportGenerator = new ReportGenerator(new URL("s3:" + System.getenv(ENV_S3_BUCKET) + "/" + parms.get(PARM_REPORT) + ".prpt"),
-    			ReportGenerator reportGenerator = new ReportGenerator(getClass().getClassLoader().getResource("customers.prpt"),
+    			ReportGenerator reportGenerator = new ReportGenerator(new URL("s3:" + System.getenv(ENV_S3_BUCKET) + "/" + parms.get(PARM_REPORT) + ".prpt"),
     					parms,
     					props.getProperty(PROP_DATA_DRIVER),
     					props.getProperty(PROP_DATA_URL),
     					props.getProperty(PROP_DATA_USER),
-    					props.getProperty(PROP_DATA_PASSWORD),
-    					props.getProperty(PROP_DATA_QUERY));
+    					props.getProperty(PROP_DATA_PASSWORD));
+    			for (Object key : props.keySet()) {
+    				if (!(PROP_DATA_DRIVER.equals(key) | PROP_DATA_URL.equals(key) | PROP_DATA_USER.equals(key) | PROP_DATA_PASSWORD.equals(key))) {
+    					reportGenerator.addQuery((String)key, props.getProperty((String)key));
+    				}
+    			}
     			ByteArrayOutputStream reportByteStream = new ByteArrayOutputStream();
     			try {
     				reportGenerator.generateReport(outputType, reportByteStream);
@@ -92,38 +94,39 @@ public class PentahoAsyncReportHandler extends PentahoReportHandlerBase implemen
     					cause = cause.getCause();
     				}
     				cause.printStackTrace(ps);
-    				output.write(("{ errorMessage: '" + e.getMessage() + "',"
+    				output.write((String.format(RESPONSE_TEMPLATE, 500, "{ errorMessage: '" + e.getMessage() + "',"
     						+ "  causeMessage: '" + cause.getMessage() + "',"
-    						+ "  causeStackTrace: '" + new String(baos.toByteArray(), "utf-8") + "' }").getBytes());
+    						+ "  causeStackTrace: '" + new String(baos.toByteArray(), "utf-8") + "' }")).getBytes());
     				return;
     			}
     			byte[] reportBytes = reportByteStream.toByteArray();
     			if (!parms.containsKey(PARM_OUTPUT_BUCKET)) {
-    				output.write("{ error: 'You must provide a folder parameter' }".getBytes());
+    				output.write(String.format(RESPONSE_TEMPLATE, 500, "{ errorMessage: 'You must provide a folder parameter' }").getBytes());
     			} else if (!parms.containsKey(PARM_OUTPUT_KEY)) {
-    				output.write("{ error: 'You must provide a file parameter' }".getBytes());
+    				output.write(String.format(RESPONSE_TEMPLATE, 500, "{ errorMessage: 'You must provide a file parameter' }").getBytes());
     			} else {
+    				System.out.println("Creating output file on S3, bucket=" + (String)parms.get(PARM_OUTPUT_BUCKET) + "; key=" + (String)parms.get(PARM_OUTPUT_KEY) + ".");
     				putS3Object((String)parms.get(PARM_OUTPUT_BUCKET), (String)parms.get(PARM_OUTPUT_KEY), new ByteArrayInputStream(reportBytes), reportBytes.length);
-    				output.write(("{ message: 'Report generated',"
+    				output.write((String.format(RESPONSE_TEMPLATE, 200, "{ message: 'Report generated',"
     						+ "type: '" + parms.get(PARM_OUTPUT_TYPE) + "',"
     						+ "folder: '" + parms.get(PARM_OUTPUT_BUCKET) + "',"
-    						+ "file: '" + parms.get(PARM_OUTPUT_KEY) + "'").getBytes());
+    						+ "file: '" + parms.get(PARM_OUTPUT_KEY) + "'")).getBytes());
     			}
     		} else {
     			StringBuffer out = new StringBuffer();
-    			out.append("{ error: 'You must provide a report parameter',\n");
+    			out.append("{ errorMessage: 'You must provide a report parameter',\n");
     			out.append("  inputString: '" + inputString + "',\n");
     			out.append("  parameters: { \n");
     			for (String parm : parms.keySet()) {
     				out.append("    \"" + parm + "\": '" + parms.get(parm) + "',\n");
     			}
     			out.append(" } }");
-    			output.write(out.toString().getBytes());
+    			output.write(String.format(RESPONSE_TEMPLATE, 500, out.toString()).getBytes());
     		}
         } catch(ParseException | IllegalArgumentException | ReportProcessingException e) {
         	context.getLogger().log(e.getMessage());
 			e.printStackTrace();
-			output.write(("{ errorMessage: '" + e.getMessage() + "' }").getBytes());
+			output.write((String.format(RESPONSE_TEMPLATE, 500, "{ errorMessage: '" + e.getMessage() + "' }")).getBytes());
 		}
 	}
 

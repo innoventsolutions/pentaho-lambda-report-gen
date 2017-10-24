@@ -33,6 +33,17 @@
               <goal>shade</goal>
             </goals>
             <configuration>
+              <transformers>
+                <transformer>
+                  <resource>loader.properties</resource>
+                </transformer>
+                <transformer>
+                  <resource>libdocbundle.properties</resource>
+                </transformer>
+                <transformer>
+                  <resource>libformula.properties</resource>
+                </transformer>
+              </transformers>
               <artifactSet>
                 <excludes>
                   <exclude>com.amazonaws:aws-lambda-java-events</exclude>

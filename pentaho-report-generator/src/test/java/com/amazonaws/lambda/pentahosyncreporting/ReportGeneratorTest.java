@@ -30,7 +30,6 @@ public class ReportGeneratorTest {
 				null,
 				null,
 				null,
-				null,
 				null);
 		
 		try {
