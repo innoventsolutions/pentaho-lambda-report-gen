@@ -50,3 +50,6 @@ The four parameters set up when creating the API Gateway are the bare minimum re
 * file - the name of the file to create the report as, including the extension
 
 In addition to the four core parameters, any parameters required by the report itself should be included in the query string. These parameters will automatically be passed into the report when it is run.
+
+An example of the parameters string could look something like this:
+* ?report=customers&outputType=pdf&folder=mys3bucket&file=customers.pdf&lastName=Wilson
