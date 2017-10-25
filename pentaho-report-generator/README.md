@@ -1,8 +1,8 @@
-#Lambda-Pentaho Integration
-##Overview
+# Lambda-Pentaho Integration
+## Overview
 This project allows an AWS Lambda function to execute a Pentaho report in an S3 environment and depositing the report result to a parameterized S3 location.
-##Installation Instructions
-####Create the Lambda function
+## Installation Instructions
+#### Create the Lambda function
 1. From the Lambda console, click the *Create function* button
 1. Set the Runtime to Java 8
 1. Upload the pentahosyncreporting-*x.x.x*.jar file
@@ -18,7 +18,7 @@ This project allows an AWS Lambda function to execute a Pentaho report in an S3 
 1. Ensure enough *Memory* is allocated to hold the entire final report, as it must be contained in memory before it can be saved back to the S3 environment
 1. Click the *Save* button
 
-####Create the API Gateway
+#### Create the API Gateway
 1. From the *Trigges* tag, click the *Add trigger* button
 1. Select the *API Gateway* trigger type
    - Configure as appropriate for your uses
@@ -33,7 +33,7 @@ This project allows an AWS Lambda function to execute a Pentaho report in an S3 
    - file
 1. Configuration should be completed at this point
 
-##Usage
+## Usage
 The four parameters set up when creating the API Gateway are the bare minimum required to run a report and are interpreted as follows:
 * report - This is the name of the report to be executed. It must have a corresponding PRPT file in the s3_bucket *Environment variable*.
   * There may also be a *properties* file with the name of the report, which can be used to define data sources if they are not embedded in the *prpt* file; it should contain the following values
@@ -48,4 +48,5 @@ The four parameters set up when creating the API Gateway are the bare minimum re
   * excel
 * folder - the S3 bucket where the final report will be created
 * file - the name of the file to create the report as, including the extension
+
 In addition to the four core parameters, any parameters required by the report itself should be included in the query string. These parameters will automatically be passed into the report when it is run.
