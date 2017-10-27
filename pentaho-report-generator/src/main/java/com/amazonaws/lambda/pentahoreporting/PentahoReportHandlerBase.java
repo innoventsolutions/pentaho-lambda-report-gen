@@ -93,7 +93,7 @@ public class PentahoReportHandlerBase {
         if (event.get("queryStringParameters") != null) {
             JSONObject qps = (JSONObject)event.get("queryStringParameters");
             for (Object key : qps.keySet()) {
-            	out.put((String) key, (String)qps.get(key));
+        		out.put((String) key, (String)qps.get(key));
             }
         }
 
