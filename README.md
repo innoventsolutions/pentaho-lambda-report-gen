@@ -44,6 +44,9 @@ The four parameters set up when creating the API Gateway are the bare minimum re
     * dataUser - the username to be used as part of the credentials
     * dataPassword - the password associated with dataUser
     * One or more entries mapping to named datasources in the report which are set to the SQL query to be used
+	* One or more entries that start with "parm" and end with the name of a report parameter, the value of the parameter indicates what it should be converted to before being submitted to the report; these types are currently supported:
+	  * integer
+	  * double
 * outputType - one of three values indicated the desired output for the report
   * pdf
   * html
