@@ -116,35 +116,35 @@ public class PentahoAsyncReportHandler extends PentahoReportHandlerBase implemen
     				}
     				cause.printStackTrace(ps);
     				output.write((String.format(RESPONSE_TEMPLATE, 500, "{"
-    						+ "\"errorMessage\": \"" + e.getMessage() + "\", "
-    						+ "\"causeMessage\": \"" + cause.getMessage() + "\", "
-    						+ "\"causeStackTrace\": \"" + new String(baos.toByteArray(), "utf-8") + "\""
+    						+ "\\\"errorMessage\\\": \\\"" + e.getMessage() + "\\\", "
+    						+ "\\\"causeMessage\\\": \\\"" + cause.getMessage() + "\\\", "
+    						+ "\\\"causeStackTrace\\\": \\\"" + new String(baos.toByteArray(), "utf-8") + "\\\""
     						+ " }")).getBytes());
     				return;
     			}
     			byte[] reportBytes = reportByteStream.toByteArray();
     			if (!parms.containsKey(PARM_OUTPUT_BUCKET)) {
-    				output.write(String.format(RESPONSE_TEMPLATE, 500, "{ \"errorMessage\": \"You must provide a folder parameter\" }").getBytes());
+    				output.write(String.format(RESPONSE_TEMPLATE, 500, "{ \\\"errorMessage\\\": \\\"You must provide a folder parameter\\\" }").getBytes());
     			} else if (!parms.containsKey(PARM_OUTPUT_KEY)) {
-    				output.write(String.format(RESPONSE_TEMPLATE, 500, "{ \"errorMessage\": \"You must provide a file parameter\" }").getBytes());
+    				output.write(String.format(RESPONSE_TEMPLATE, 500, "{ \\\"errorMessage\\\": \\\"You must provide a file parameter\\\" }").getBytes());
     			} else {
     				System.out.println("Creating output file on S3, bucket=" + (String)parms.get(PARM_OUTPUT_BUCKET) + "; key=" + (String)parms.get(PARM_OUTPUT_KEY) + ".");
     				putS3Object((String)parms.get(PARM_OUTPUT_BUCKET), (String)parms.get(PARM_OUTPUT_KEY), new ByteArrayInputStream(reportBytes), reportBytes.length);
     				output.write((String.format(RESPONSE_TEMPLATE, 200, "{ "
-    						+ "\"message\": \"Report generated\", "
-    						+ "\"type\": \"" + parms.get(PARM_OUTPUT_TYPE) + "\", "
-    						+ "\"folder\": \"" + parms.get(PARM_OUTPUT_BUCKET) + "\", "
-    						+ "\"file\": \"" + parms.get(PARM_OUTPUT_KEY) + "\""
+    						+ "\\\"message\\\": \\\"Report generated\\\", "
+    						+ "\\\"type\\\": \\\"" + parms.get(PARM_OUTPUT_TYPE) + "\\\", "
+    						+ "\\\"folder\\\": \\\"" + parms.get(PARM_OUTPUT_BUCKET) + "\\\", "
+    						+ "\\\"file\\\": \\\"" + parms.get(PARM_OUTPUT_KEY) + "\\\""
     						+ " }")).getBytes());
     			}
     		} else {
     			StringBuffer out = new StringBuffer();
     			out.append("{"
-    					+ "\"errorMessage\": \"You must provide a report parameter\",");
-    			out.append("\"inputString\": \"" + inputString + "\",");
-    			out.append("\"parameters\": { ");
+    					+ "\\\"errorMessage\\\": \\\"You must provide a report parameter\\\",");
+    			out.append("\\\"inputString\\\": \\\"" + inputString + "\\\",");
+    			out.append("\\\"parameters\\\": { ");
     			for (String parm : parms.keySet()) {
-    				out.append("\"" + parm + "\": \"" + parms.get(parm) + "\",");
+    				out.append("\\\"" + parm + "\\\": \\\"" + parms.get(parm) + "\\\",");
     			}
     			out.append("}"
     					+ "}");
@@ -153,7 +153,7 @@ public class PentahoAsyncReportHandler extends PentahoReportHandlerBase implemen
         } catch(ParseException | IllegalArgumentException | ReportProcessingException e) {
         	context.getLogger().log(e.getMessage());
 			e.printStackTrace();
-			output.write((String.format(RESPONSE_TEMPLATE, 500, "{ \"errorMessage\": \"" + e.getMessage() + "\" }")).getBytes());
+			output.write((String.format(RESPONSE_TEMPLATE, 500, "{ \\\"errorMessage\\\": \\\"" + e.getMessage() + "\\\" }")).getBytes());
 		}
 	}
 
