@@ -53,29 +53,52 @@ public class PentahoAsyncReportHandler extends PentahoReportHandlerBase implemen
     	try {
     		String inputString = IOUtils.toString(input, "UTF-8");
     		Map<String, Object> parms = parseParameters(inputString);
-    		if (parms.containsKey(PARM_REPORT)) {
+
+// Set up the parameters from potential sources.  Start with json structure values, fall back to parameters, fall back to env settings
+//        	String prptFile = System.getenv(PARM_REPORT);
+//        	String prptS3Bucket = System.getenv(PARM_S3_BUCKET);
+//        	String outputFolder = System.getenv(PARM_OUTPUT_BUCKET);
+//        	String outputFile = System.getenv(PARM_OUTPUT_KEY);
+//        	String outputType = System.getenv(PARM_OUTPUT_TYPE);
+
+        	String prptFile = (String)parms.get(PARM_REPORT);
+        	String prptS3Bucket = (String)parms.get(PARM_S3_BUCKET);
+        	String outputFolder = (String)parms.get(PARM_OUTPUT_BUCKET);
+        	String outputFile = (String)parms.get(PARM_OUTPUT_KEY);
+        	String outputType = (String)parms.get(PARM_OUTPUT_TYPE);
+
+        	if (prptFile == null) prptFile = System.getenv(PARM_REPORT);
+        	if (prptS3Bucket == null) prptS3Bucket = System.getenv(PARM_S3_BUCKET);
+        	if (outputFolder == null) outputFolder = System.getenv(PARM_OUTPUT_BUCKET);
+        	if (outputFile == null) outputFile = System.getenv(PARM_OUTPUT_KEY);
+        	if (outputType == null) outputType = System.getenv(PARM_OUTPUT_TYPE);
+
+        	if (prptFile != null) {
     			Properties props = new Properties();
-    			URL s3PropsUrl = new URL("s3:" + System.getenv(ENV_S3_BUCKET) + "/" + parms.get(PARM_REPORT) + ".properties");
+    			URL s3PropsUrl = new URL("s3:" + prptS3Bucket + "/" + prptFile + ".properties");
     			try {
 	    			InputStream propStream = s3PropsUrl.openStream();
 	    			if (propStream != null) {
 		    			props.load(propStream);
 		    			propStream.close();
 	    			} else {
-	    				System.out.println("No properties file found for " + parms.get(PARM_REPORT) + ". Report's default data settings will be used.");
+	    				System.out.println("No properties file found for " + prptFile + ". Report's default data settings will be used.");
 	    			}
     			} catch(AmazonClientException e) {
-    				System.out.println("No properties file found for " + parms.get(PARM_REPORT) + ". Report's default data settings will be used.");
+    				System.out.println("No properties file found for " + prptFile + ". Report's default data settings will be used.");
     			}
     			
-    			OutputType outputType = OutputType.PDF;
-    			if (parms.containsKey(PARM_OUTPUT_TYPE)) {
-    				if (((String)parms.get(PARM_OUTPUT_TYPE)).toLowerCase().equals(PARM_OUTPUT_TYPE_PDF)) {
-    					outputType = OutputType.PDF;
-    				} else if (((String)parms.get(PARM_OUTPUT_TYPE)).toLowerCase().equals(PARM_OUTPUT_TYPE_EXCEL)) {
-    					outputType = OutputType.EXCEL;
-    				} else if (((String)parms.get(PARM_OUTPUT_TYPE)).toLowerCase().equals(PARM_OUTPUT_TYPE_HTML)) {
-    					outputType = OutputType.HTML;
+    			OutputType outputTypeValue = OutputType.PDF;
+    			String outputExtension = "pdf";
+    			if (outputType != null) {
+    				if (outputType.equalsIgnoreCase(PARM_OUTPUT_TYPE_PDF)) {
+    					outputTypeValue = OutputType.PDF;
+    				} else if (outputType.equalsIgnoreCase(PARM_OUTPUT_TYPE_EXCEL)) {
+    					outputTypeValue = OutputType.EXCEL;
+    					outputExtension = "xls";
+    				} else if (outputType.equalsIgnoreCase(PARM_OUTPUT_TYPE_HTML)) {
+    					outputTypeValue = OutputType.HTML;
+    					outputExtension = "html";
     				}
     			}
     			
@@ -92,7 +115,7 @@ public class PentahoAsyncReportHandler extends PentahoReportHandlerBase implemen
     				}
     			}
     			
-    			ReportGenerator reportGenerator = new ReportGenerator(new URL("s3:" + System.getenv(ENV_S3_BUCKET) + "/" + parms.get(PARM_REPORT) + ".prpt"),
+    			ReportGenerator reportGenerator = new ReportGenerator(new URL("s3:" + outputFolder + "/" + outputFile + ".prpt"),
     					parms,
     					props.getProperty(PROP_DATA_DRIVER),
     					props.getProperty(PROP_DATA_URL),
@@ -105,7 +128,7 @@ public class PentahoAsyncReportHandler extends PentahoReportHandlerBase implemen
     			}
     			ByteArrayOutputStream reportByteStream = new ByteArrayOutputStream();
     			try {
-    				reportGenerator.generateReport(outputType, reportByteStream);
+    				reportGenerator.generateReport(outputTypeValue, reportByteStream);
     			} catch(ResourceException e) {
     				ByteArrayOutputStream baos = new ByteArrayOutputStream();
     				PrintStream ps = new PrintStream(baos, true, "utf-8");
@@ -123,18 +146,18 @@ public class PentahoAsyncReportHandler extends PentahoReportHandlerBase implemen
     				return;
     			}
     			byte[] reportBytes = reportByteStream.toByteArray();
-    			if (!parms.containsKey(PARM_OUTPUT_BUCKET)) {
+    			if (outputFolder == null) {
     				output.write(String.format(RESPONSE_TEMPLATE, 500, "{ \\\"errorMessage\\\": \\\"You must provide a folder parameter\\\" }").getBytes());
-    			} else if (!parms.containsKey(PARM_OUTPUT_KEY)) {
+    			} else if (outputFile == null) {
     				output.write(String.format(RESPONSE_TEMPLATE, 500, "{ \\\"errorMessage\\\": \\\"You must provide a file parameter\\\" }").getBytes());
     			} else {
-    				System.out.println("Creating output file on S3, bucket=" + (String)parms.get(PARM_OUTPUT_BUCKET) + "; key=" + (String)parms.get(PARM_OUTPUT_KEY) + ".");
-    				putS3Object((String)parms.get(PARM_OUTPUT_BUCKET), (String)parms.get(PARM_OUTPUT_KEY), new ByteArrayInputStream(reportBytes), reportBytes.length);
+    				System.out.println("Creating output file on S3, bucket=" + outputFolder + "; key=" + outputFile + ".");
+    				putS3Object(outputFolder, outputFile + "." + outputExtension, new ByteArrayInputStream(reportBytes), reportBytes.length);
     				output.write((String.format(RESPONSE_TEMPLATE, 200, "{ "
     						+ "\\\"message\\\": \\\"Report generated\\\", "
-    						+ "\\\"type\\\": \\\"" + parms.get(PARM_OUTPUT_TYPE) + "\\\", "
-    						+ "\\\"folder\\\": \\\"" + parms.get(PARM_OUTPUT_BUCKET) + "\\\", "
-    						+ "\\\"file\\\": \\\"" + parms.get(PARM_OUTPUT_KEY) + "\\\""
+    						+ "\\\"type\\\": \\\"" + outputType + "\\\", "
+    						+ "\\\"folder\\\": \\\"" + outputFolder + "\\\", "
+    						+ "\\\"file\\\": \\\"" + outputFile + "\\\""
     						+ " }")).getBytes());
     			}
     		} else {

@@ -26,11 +26,11 @@ import com.amazonaws.services.s3.model.PutObjectResult;
  *
  */
 public class PentahoReportHandlerBase {
-	protected static final String PARM_REPORT = "report";
-	protected static final String PARM_OUTPUT_TYPE = "outputType";
-	protected static final String PARM_OUTPUT_BUCKET = "folder";
-	protected static final String PARM_OUTPUT_KEY = "file";
-	protected static final String ENV_S3_BUCKET = "s3_bucket";
+	protected static final String PARM_REPORT = "prpt_file";
+	protected static final String PARM_OUTPUT_TYPE = "output_type";
+	protected static final String PARM_OUTPUT_BUCKET = "output_s3_bucket";
+	protected static final String PARM_OUTPUT_KEY = "output_file";
+	protected static final String PARM_S3_BUCKET = "prpt_s3_bucket";
 	protected static final String PROP_PRPT = "prpt";
 	protected static final String PROP_DATA_DRIVER = "dataDriver";
 	protected static final String PROP_DATA_URL = "dataUrl";
