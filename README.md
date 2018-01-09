@@ -9,9 +9,12 @@ The Pentaho-Lambda Integration can be found in the pentaho-report-generator proj
 1. Set the Runtime to Java 8
 1. Upload the pentahosyncreporting-*x.x.x*.jar file
 1. Set the Handler to com.amazonaws.lambda.pentahoreporting.PentahoAsyncReportHandler
-1. Create a new *Environment variable*
-   - Name it s3_bucket
-   - Set it to the bucket where the report file (prpt) to be executed is stored
+1. Create *Environment variables* as needed for the following:
+   - prpt_s3_bucket: The S3 bucket where the report file (prpt) to be executed is stored
+   - prpt_file: The name report file (and report properties file) to be executed, without the extension
+   - output_type: pdf, excel, or html
+   - output_s3_bucket: The destination S3 bucket for the report
+   - output_file: The destination file name (without the extension)
 1. Set the execution role
    - It will probably need to be custom
    - It will need the *AWSLambdaBasicExecutionRole*
@@ -28,11 +31,12 @@ The Pentaho-Lambda Integration can be found in the pentaho-report-generator proj
 1. Open the *Integration Request*
 1. Ensure *Use Lambda Proxy integration* is checked
 1. Return to *Method Execution* and open the *Method Request* details
-1. Add the following parameters, all set to be *Required*
-   - report
-   - outputType
-   - folder
-   - file
+1. Add the following parameters, they don't need to be set required if the values are configured in the environment properties:
+   - prpt_s3_bucket
+   - prpt_file
+   - output_type
+   - output_s3_bucket
+   - output_file
 1. Configuration should be completed at this point
 
 ### Usage
