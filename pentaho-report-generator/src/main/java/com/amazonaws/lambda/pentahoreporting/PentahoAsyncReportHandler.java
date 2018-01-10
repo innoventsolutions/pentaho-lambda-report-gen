@@ -115,7 +115,7 @@ public class PentahoAsyncReportHandler extends PentahoReportHandlerBase implemen
     				}
     			}
     			
-    			ReportGenerator reportGenerator = new ReportGenerator(new URL("s3:" + outputFolder + "/" + outputFile + ".prpt"),
+    			ReportGenerator reportGenerator = new ReportGenerator(new URL("s3:" + prptS3Bucket + "/" + prptFile + ".prpt"),
     					parms,
     					props.getProperty(PROP_DATA_DRIVER),
     					props.getProperty(PROP_DATA_URL),
@@ -155,9 +155,9 @@ public class PentahoAsyncReportHandler extends PentahoReportHandlerBase implemen
     				putS3Object(outputFolder, outputFile + "." + outputExtension, new ByteArrayInputStream(reportBytes), reportBytes.length);
     				output.write((String.format(RESPONSE_TEMPLATE, 200, "{ "
     						+ "\\\"message\\\": \\\"Report generated\\\", "
-    						+ "\\\"type\\\": \\\"" + outputType + "\\\", "
-    						+ "\\\"folder\\\": \\\"" + outputFolder + "\\\", "
-    						+ "\\\"file\\\": \\\"" + outputFile + "\\\""
+    						+ "\\\"output_type\\\": \\\"" + outputType + "\\\", "
+    						+ "\\\"output_s3_bucket\\\": \\\"" + outputFolder + "\\\", "
+    						+ "\\\"output_file\\\": \\\"" + outputFile + "\\\""
     						+ " }")).getBytes());
     			}
     		} else {
