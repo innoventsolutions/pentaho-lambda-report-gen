@@ -49,6 +49,7 @@ public class PentahoAsyncReportHandler extends PentahoReportHandlerBase implemen
 	 */
 	@Override
 	public void handleRequest(InputStream input, OutputStream output, Context context) throws IOException {
+    	String corsHeaders = "";
     	System.out.println("Generating report.");
     	try {
     		String inputString = IOUtils.toString(input, "UTF-8");
@@ -72,7 +73,16 @@ public class PentahoAsyncReportHandler extends PentahoReportHandlerBase implemen
         	if (outputFolder == null) outputFolder = System.getenv(PARM_OUTPUT_BUCKET);
         	if (outputFile == null) outputFile = System.getenv(PARM_OUTPUT_KEY);
         	if (outputType == null) outputType = System.getenv(PARM_OUTPUT_TYPE);
-
+        	final boolean useCors = "true".equalsIgnoreCase(System.getenv(VAR_USE_CORS));
+        	if(useCors) {
+            	String corsDomain = System.getenv(VAR_CORS_DOMAIN);
+            	if(corsDomain == null) {
+            		corsDomain = "*";
+            	}
+            	corsHeaders = String.format(",\n" 
+    				    + "        \"Access-Control-Allow-Headers\": \"Content-Type\",\n" 
+    				    + "        \"Access-Control-Allow-Origin\": \"%s\"", corsDomain);
+        	}
         	if (prptFile != null) {
     			Properties props = new Properties();
     			URL s3PropsUrl = new URL("s3:" + prptS3Bucket + "/" + prptFile + ".properties");
@@ -138,27 +148,27 @@ public class PentahoAsyncReportHandler extends PentahoReportHandlerBase implemen
     					cause = cause.getCause();
     				}
     				cause.printStackTrace(ps);
-    				output.write((String.format(RESPONSE_TEMPLATE, 500, "{"
+    				output.write((getResponse(500, "{"
     						+ "\\\"errorMessage\\\": \\\"" + e.getMessage() + "\\\", "
     						+ "\\\"causeMessage\\\": \\\"" + cause.getMessage() + "\\\", "
     						+ "\\\"causeStackTrace\\\": \\\"" + new String(baos.toByteArray(), "utf-8") + "\\\""
-    						+ " }")).getBytes());
+    						+ " }", corsHeaders)).getBytes());
     				return;
     			}
     			byte[] reportBytes = reportByteStream.toByteArray();
     			if (outputFolder == null) {
-    				output.write(String.format(RESPONSE_TEMPLATE, 500, "{ \\\"errorMessage\\\": \\\"You must provide a folder parameter\\\" }").getBytes());
+    				output.write(getResponse(500, "{ \\\"errorMessage\\\": \\\"You must provide a folder parameter\\\" }", corsHeaders).getBytes());
     			} else if (outputFile == null) {
-    				output.write(String.format(RESPONSE_TEMPLATE, 500, "{ \\\"errorMessage\\\": \\\"You must provide a file parameter\\\" }").getBytes());
+    				output.write(getResponse(500, "{ \\\"errorMessage\\\": \\\"You must provide a file parameter\\\" }", corsHeaders).getBytes());
     			} else {
     				System.out.println("Creating output file on S3, bucket=" + outputFolder + "; key=" + outputFile + ".");
     				putS3Object(outputFolder, outputFile + "." + outputExtension, new ByteArrayInputStream(reportBytes), reportBytes.length);
-    				output.write((String.format(RESPONSE_TEMPLATE, 200, "{ "
+    				output.write((getResponse(200, "{ "
     						+ "\\\"message\\\": \\\"Report generated\\\", "
     						+ "\\\"output_type\\\": \\\"" + outputType + "\\\", "
     						+ "\\\"output_s3_bucket\\\": \\\"" + outputFolder + "\\\", "
     						+ "\\\"output_file\\\": \\\"" + outputFile + "\\\""
-    						+ " }")).getBytes());
+    						+ " }", corsHeaders)).getBytes());
     			}
     		} else {
     			StringBuffer out = new StringBuffer();
@@ -171,12 +181,14 @@ public class PentahoAsyncReportHandler extends PentahoReportHandlerBase implemen
     			}
     			out.append("}"
     					+ "}");
-    			output.write(String.format(RESPONSE_TEMPLATE, 500, out.toString()).getBytes());
+    			output.write(getResponse(500, out.toString(), corsHeaders).getBytes());
     		}
         } catch(ParseException | IllegalArgumentException | ReportProcessingException e) {
         	context.getLogger().log(e.getMessage());
 			e.printStackTrace();
-			output.write((String.format(RESPONSE_TEMPLATE, 500, "{ \\\"errorMessage\\\": \\\"" + e.getMessage() + "\\\" }")).getBytes());
+			final String response = getResponse(500, 
+				"{ \\\"errorMessage\\\": \\\"" + e.getMessage() + "\\\" }", corsHeaders); 
+			output.write(response.getBytes());
 		}
 	}
 

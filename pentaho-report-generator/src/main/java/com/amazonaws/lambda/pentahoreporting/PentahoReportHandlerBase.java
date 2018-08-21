@@ -31,6 +31,8 @@ public class PentahoReportHandlerBase {
 	protected static final String PARM_OUTPUT_BUCKET = "output_s3_bucket";
 	protected static final String PARM_OUTPUT_KEY = "output_file";
 	protected static final String PARM_S3_BUCKET = "prpt_s3_bucket";
+	protected static final String VAR_USE_CORS = "use_cors";
+	protected static final String VAR_CORS_DOMAIN = "cors_domain";
 	protected static final String PROP_PRPT = "prpt";
 	protected static final String PROP_DATA_DRIVER = "dataDriver";
 	protected static final String PROP_DATA_URL = "dataUrl";
@@ -40,13 +42,19 @@ public class PentahoReportHandlerBase {
 	protected static final String PARM_OUTPUT_TYPE_PDF = "pdf";
 	protected static final String PARM_OUTPUT_TYPE_EXCEL = "excel";
 	protected static final String PARM_OUTPUT_TYPE_HTML = "html";
-	protected static final String RESPONSE_TEMPLATE = "{\n"
+	private static final String RESPONSE_TEMPLATE = "{\n"
 		    + "    \"isBase64Encoded\": false,\n"
 		    + "    \"statusCode\": %d,\n"
-		    + "    \"headers\": { \"Content-Type\": \"application/json\" },\n"
+		    + "    \"headers\": {\n" 
+		    + "        \"Content-Type\": \"application/json\"%s" 
+		    + "    },\n"
 		    + "    \"body\": \"%s\"\n"
 		    + "}";
 	
+	protected String getResponse(final int statusCode, final String statusMessage, final String extraHeaders) {
+		return String.format(RESPONSE_TEMPLATE, statusCode, extraHeaders, statusMessage);
+	}
+
 	protected PutObjectResult putS3Object(String bucketName, String key, InputStream inputStream) {
 		// Read out the stream to get the content length which is required by S3
 		// WARNING: This could cause OOM errors if not enough memory is allocated to the lambda
