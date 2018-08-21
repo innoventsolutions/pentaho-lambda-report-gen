@@ -15,6 +15,8 @@ The Pentaho-Lambda Integration can be found in the pentaho-report-generator proj
    - output_type: pdf, excel, or html
    - output_s3_bucket: The destination S3 bucket for the report
    - output_file: The destination file name (without the extension)
+   - use_cors: If you want to use CORS response headers enter true.  It defaults to false.
+   - cors_domain: If use_cors = true then this variable may contain the CORS domain.  It defaults to "*".
 1. Set the execution role
    - It will probably need to be custom
    - It will need the *AWSLambdaBasicExecutionRole*
@@ -24,7 +26,7 @@ The Pentaho-Lambda Integration can be found in the pentaho-report-generator proj
 1. Click the *Save* button
 
 #### Create the API Gateway
-1. From the *Trigges* tag, click the *Add trigger* button
+1. From the *Triggers* tag, click the *Add trigger* button
 1. Select the *API Gateway* trigger type
    - Configure as appropriate for your uses
 1. Select the function in the *Resources* column, a process flow should appear to the right
