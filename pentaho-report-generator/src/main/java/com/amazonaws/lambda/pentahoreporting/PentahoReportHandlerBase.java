@@ -85,11 +85,12 @@ public class PentahoReportHandlerBase {
 	}
 
     protected Map<String, Object> parseParameters(String input) throws IOException, ParseException {
+    	System.out.println(String.format("parseParameters: input = '%s'", input));
     	Map<String, Object> out = new HashMap<String, Object>();
 
-    	JSONParser parser = new JSONParser();
+    	final JSONParser parser = new JSONParser();
+    	final JSONObject event = (JSONObject)parser.parse(input);
 
-        JSONObject event = (JSONObject)parser.parse(input);
         if (event.get("queryStringParameters") != null) {
             JSONObject qps = (JSONObject)event.get("queryStringParameters");
             for (Object key : qps.keySet()) {
@@ -104,7 +105,16 @@ public class PentahoReportHandlerBase {
             }
         }
 
-        // TODO raw json request
+        // raw json request from body - trumps others
+        final Object bodyObject = event.get("body");
+        if(bodyObject != null) {
+        	final String bodyString = (String) bodyObject;
+        	final JSONObject bodyJO = (JSONObject)parser.parse(bodyString);
+        	for(final Object key : bodyJO.keySet()) {
+        		out.put((String) key, (String)bodyJO.get(key));
+        	}
+        }
+
     	return out;
     }
 }
